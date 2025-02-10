@@ -1,0 +1,88 @@
+// Sample test code for GraphQL back & front end //
+
+const express = require('express');
+const { ApolloServer, gql } = require('apollo-server-express');
+const cors = require('cors');
+
+const app = express();
+app.use(cors());
+
+// Sample GraphQL Schema
+typeDefs = gql`
+  type Query {
+    hello: String
+    debug(input: String!): String
+  }
+`;
+
+// Sample Resolver
+const resolvers = {
+  Query: {
+    hello: () => "Hello, GraphQL Debugger!",
+    debug: (_, { input }) => `You sent: ${input}`,
+  },
+};
+
+// Apollo Server
+const server = new ApolloServer({ typeDefs, resolvers });
+
+async function startServer() {
+  await server.start();
+  server.applyMiddleware({ app });
+
+  app.listen(4000, () => {
+    console.log(`GraphQL Debugger running at http://localhost:4000${server.graphqlPath}`);
+  });
+}
+
+startServer();
+
+ import React, { useState } from 'react';
+
+function App() {
+  const [query, setQuery] = useState('{ hello }');
+  const [response, setResponse] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [responseTime, setResponseTime] = useState(null);
+
+  const sendQuery = async () => {
+    setLoading(true);
+    setError(null);
+    const startTime = performance.now();
+    try {
+      const res = await fetch('https://your-deployed-backend-url/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      const data = await res.json();
+      setResponse(JSON.stringify(data, null, 2));
+      setResponseTime((performance.now() - startTime).toFixed(2) + ' ms');
+    } catch (err) {
+      setError('Failed to fetch response. Please check your query or server.');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+      <h1>GraphQL API Debugger</h1>
+      <textarea 
+        rows="5" 
+        cols="50" 
+        value={query} 
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <br />
+      <button onClick={sendQuery} style={{ marginTop: '10px', padding: '5px 10px' }} disabled={loading}>
+        {loading ? 'Sending...' : 'Send Query'}
+      </button>
+      {responseTime && <p>Response Time: {responseTime}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <pre style={{ background: '#f4f4f4', padding: '10px', marginTop: '10px', whiteSpace: 'pre-wrap' }}>{response}</pre>
+    </div>
+  );
+}
+
+export default App;
